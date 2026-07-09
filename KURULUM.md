@@ -41,14 +41,20 @@ GitHub → wecult-radar → Settings → Secrets and variables → Actions:
 |---|---|
 | `RADAR_ENABLED` | `true` |
 
-## 4b. Reddit API anahtarı (3 dk — GEREKLİ: GitHub sunucularının IP'leri
-Reddit'in anonim RSS'inde engelli)
-1. Reddit hesabınla giriş yapıp aç: https://www.reddit.com/prefs/apps
-2. En altta **create app** → name: `wecult-radar` → tip: **script** →
-   redirect uri: `http://localhost` → create app.
-3. Uygulama adının hemen ALTINDAKİ karışık kod = **client id**;
-   "secret" satırındaki = **client secret**.
-4. GitHub secrets'a ekle: `REDDIT_CLIENT_ID` ve `REDDIT_CLIENT_SECRET`.
+## 4b. Reddit ayağı — YEREL çalışır (bulut IP'leri Reddit'te engelli;
+self-servis API anahtarı da 2026'da kapandı, manuel onaya döndü)
+1. `wecult-radar/.env` dosyasını aç → `SUPABASE_SERVICE_KEY=` satırına
+   service_role key'ini yapıştır, kaydet. (Diğer satırlar dolu geldi.)
+2. Görev Zamanlayıcı kaydı (cmd'ye tek satır — 30 dk'da bir gizli çalışır):
+   ```
+   schtasks /create /f /tn "WeCultRadar" /tr "wscript.exe \"C:\Users\kapta\Desktop\wecult-radar\run-hidden.vbs\"" /sc minute /mo 30
+   ```
+   Kaldırmak istersen: `schtasks /delete /tn "WeCultRadar" /f`
+3. Bilgisayar kapalıyken Reddit taraması durur (HN+haber bulutta devam eder),
+   açılınca kaldığı yerden sürer. Log: `wecult-radar/radar-local.log`.
+4. (Opsiyonel, paralel) Resmi API onayına başvur — çıkarsa Reddit ayağı da
+   buluta taşınır: reddit.com/prefs/apps üzerindeki politika sayfasındaki
+   başvuru yolunu izle; kullanım amacı metni Claude'dan hazır istenebilir.
 
 ## 5. İlk çalıştırma (2 dk)
 Actions sekmesi → **radar** workflow → **Run workflow** (job: `scan`).
