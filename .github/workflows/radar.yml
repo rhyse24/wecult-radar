@@ -41,4 +41,10 @@ jobs:
           if [ -z "$JOB" ]; then
             if [ "${{ github.event.schedule }}" = "30 5 * * *" ]; then JOB=digest; else JOB=scan; fi
           fi
-          node src/index.js --job=$JOB
+          # Reddit is collected from a residential IP via a local scheduled
+          # task (GitHub runner IPs are blocked on Reddit's endpoints).
+          if [ "$JOB" = "scan" ]; then
+            node src/index.js --job=scan --sources=hn,gnews
+          else
+            node src/index.js --job=digest
+          fi

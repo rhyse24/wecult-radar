@@ -9,7 +9,11 @@ import { parseAtom, stripHtml } from "../lib/feed.js";
 // Read-only either way; this module never writes anything to Reddit.
 
 const UA = "script:wecult-radar:1.0 (read-only community monitor for wecult.app)";
-const RSS_DELAY_MS = 7000;
+// Anonymous budget is ~1 req / 10s per IP in practice; stay well under it and
+// rotate the search list so each run only fetches a third of it (every search
+// is still visited every ~90 min at the 30-min cadence).
+const RSS_DELAY_MS = 20000;
+const RSS_ROTATION_GROUPS = 3;
 const API_DELAY_MS = 1500;
 
 const viaProxy = (url) =>
@@ -70,25 +74,30 @@ async function collectViaApi(cfg, log) {
 }
 
 async function collectViaRss(cfg, log) {
+  // Subreddit feeds every run; searches rotate in thirds per 30-min slot.
+  const slot = Math.floor(Date.now() / 1800000) % RSS_ROTATION_GROUPS;
+  const searches = cfg.searches.filter((_, i) => i % RSS_ROTATION_GROUPS === slot);
   const urls = [
     ...cfg.subredditsNew.map((s) => `https://www.reddit.com/r/${s}/new/.rss?limit=25`),
-    ...cfg.searches.map(
+    ...searches.map(
       (q) => `https://www.reddit.com/search.rss?q=${encodeURIComponent(q)}&sort=new&limit=25`
     ),
   ];
   const items = [];
   for (const url of urls) {
-    try {
-      const xml = await getText(viaProxy(url));
-      for (const e of parseAtom(xml)) {
-        if (!e.id || !e.url) continue;
-        items.push({ ...e, source: "reddit", id: `reddit:${e.id}` });
-      }
-    } catch (err) {
-      log(`reddit feed failed (${url}): ${err.message}`);
-      if (String(err.message).includes("429")) {
-        log("reddit rate-limited — aborting reddit collector for this run");
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const xml = await getText(viaProxy(url));
+        for (const e of parseAtom(xml)) {
+          if (!e.id || !e.url) continue;
+          items.push({ ...e, source: "reddit", id: `reddit:${e.id}` });
+        }
         break;
+      } catch (err) {
+        log(`reddit feed failed (${url}) attempt ${attempt}: ${err.message}`);
+        // 403s are transient here; 429 means cool off before the single retry
+        if (attempt === 2) break;
+        await sleep(60000);
       }
     }
     await sleep(RSS_DELAY_MS);

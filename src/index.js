@@ -16,6 +16,9 @@ const DIGEST_DRAFTS = 3;
 const args = new Set(process.argv.slice(2));
 const DRY = args.has("--dry");
 const JOB = [...args].find((a) => a.startsWith("--job="))?.slice(6) ?? "scan";
+// Reddit runs from a residential IP (local scheduled task); GitHub runners
+// are blocked there, so the cloud workflow passes --sources=hn,gnews.
+const SOURCES = ([...args].find((a) => a.startsWith("--sources="))?.slice(10) ?? "reddit,hn,gnews").split(",");
 const log = (m) => console.log(`[radar] ${m}`);
 
 function requireEnv(names) {
@@ -42,7 +45,7 @@ async function scan() {
     ["reddit", () => collectReddit(cfg.reddit, log)],
     ["hn", () => collectHn(cfg.hn, log)],
     ["gnews", () => collectGnews(cfg.gnews, log)],
-  ]) {
+  ].filter(([name]) => SOURCES.includes(name))) {
     try {
       const got = await fn();
       log(`${name}: ${got.length} items`);
