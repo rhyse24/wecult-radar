@@ -4,9 +4,12 @@
 
 const esc = (s = "") => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+/** Returns true only if every chunk was delivered (callers must not mark
+ *  items as notified on false, or opportunities get lost silently). */
 export async function sendTelegram(text, log) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
+  let ok = true;
   // 4096 hard limit; chunk on paragraph boundaries.
   const chunks = [];
   let cur = "";
@@ -30,8 +33,12 @@ export async function sendTelegram(text, log) {
       }),
       signal: AbortSignal.timeout(20000),
     });
-    if (!res.ok) log(`telegram send failed: ${res.status} ${(await res.text()).slice(0, 200)}`);
+    if (!res.ok) {
+      log(`telegram send failed: ${res.status} ${(await res.text()).slice(0, 200)}`);
+      ok = false;
+    }
   }
+  return ok;
 }
 
 const AGE = (iso) => {

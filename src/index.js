@@ -32,9 +32,9 @@ function requireEnv(names) {
 async function deliver(text) {
   if (DRY) {
     console.log("\n===== TELEGRAM (dry) =====\n" + text.replace(/<[^>]+>/g, "") + "\n==========================\n");
-  } else {
-    await sendTelegram(text, log);
+    return true;
   }
+  return sendTelegram(text, log);
 }
 
 async function scan() {
@@ -119,8 +119,9 @@ async function digest() {
     );
     if (d) draftedById.set(it.id, d);
   }
-  await deliver(formatDigest(items, draftedById));
-  if (!DRY) await markNotified(items.map((i) => i.id));
+  const delivered = await deliver(formatDigest(items, draftedById));
+  // Only mark on confirmed delivery — otherwise items retry in the next digest
+  if (delivered && !DRY) await markNotified(items.map((i) => i.id));
 }
 
 requireEnv(DRY ? [] : ["GROQ_API_KEY", "SUPABASE_URL", "SUPABASE_SERVICE_KEY", "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID"]);
