@@ -41,6 +41,15 @@ GitHub → wecult-radar → Settings → Secrets and variables → Actions:
 |---|---|
 | `RADAR_ENABLED` | `true` |
 
+## 4b. Reddit API anahtarı (3 dk — GEREKLİ: GitHub sunucularının IP'leri
+Reddit'in anonim RSS'inde engelli)
+1. Reddit hesabınla giriş yapıp aç: https://www.reddit.com/prefs/apps
+2. En altta **create app** → name: `wecult-radar` → tip: **script** →
+   redirect uri: `http://localhost` → create app.
+3. Uygulama adının hemen ALTINDAKİ karışık kod = **client id**;
+   "secret" satırındaki = **client secret**.
+4. GitHub secrets'a ekle: `REDDIT_CLIENT_ID` ve `REDDIT_CLIENT_SECRET`.
+
 ## 5. İlk çalıştırma (2 dk)
 Actions sekmesi → **radar** workflow → **Run workflow** (job: `scan`).
 1-3 dk içinde Telegram'a ilk mesajlar düşmeli. Düşmezse run log'unu Claude'a

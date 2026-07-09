@@ -14,8 +14,9 @@ async function rest(path, init = {}) {
     headers: { ...headers(), ...init.headers },
     signal: AbortSignal.timeout(20000),
   });
-  if (!res.ok) throw new Error(`supabase ${res.status} ${path}: ${(await res.text()).slice(0, 200)}`);
-  return res.status === 204 ? null : res.json();
+  const text = await res.text();
+  if (!res.ok) throw new Error(`supabase ${res.status} ${path}: ${text.slice(0, 200)}`);
+  return text ? JSON.parse(text) : null; // 201/204 without Prefer:return come back empty
 }
 
 /** Upsert ids into radar_seen; returns the Set of ids that were NEW. */
