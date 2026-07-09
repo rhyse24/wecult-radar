@@ -1,0 +1,29 @@
+{
+  "brandTerms": ["wecult"],
+  "reddit": {
+    "subredditsNew": ["tvtime"],
+    "searches": [
+      "\"tv time\" alternative",
+      "\"tv time\" shutting down",
+      "\"tv time\" export",
+      "app to track shows",
+      "app to track movies",
+      "app to track books",
+      "game backlog app",
+      "letterboxd for games",
+      "letterboxd for tv",
+      "goodreads alternative",
+      "trakt social",
+      "simkl import",
+      "dizi takip uygulaması",
+      "film takip uygulaması",
+      "kitap takip uygulaması",
+      "wecult"
+    ]
+  },
+  "hn": ["tv time", "tracker app", "letterboxd", "wecult"],
+  "gnews": {
+    "en": ["\"tv time\" alternative", "\"tv time\" shut down", "tv show tracker app"],
+    "tr": ["dizi takip uygulaması", "tv time kapanıyor"]
+  }
+}

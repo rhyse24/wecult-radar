@@ -1,0 +1,42 @@
+name: radar
+
+on:
+  schedule:
+    # Kampanya temposu (25 Tem'e kadar): 30 dk'da bir tarama.
+    # 25 Tem'den sonra bunu '17 */2 * * *' yap (kalıcı mod).
+    - cron: "17,47 * * * *"
+    # Günlük digest: 05:30 UTC = 08:30 TR
+    - cron: "30 5 * * *"
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "scan | digest"
+        default: "scan"
+
+concurrency:
+  group: radar
+  cancel-in-progress: false
+
+jobs:
+  radar:
+    if: vars.RADAR_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run radar
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          JOB="${{ github.event.inputs.job }}"
+          if [ -z "$JOB" ]; then
+            if [ "${{ github.event.schedule }}" = "30 5 * * *" ]; then JOB=digest; else JOB=scan; fi
+          fi
+          node src/index.js --job=$JOB

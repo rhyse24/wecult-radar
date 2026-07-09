@@ -1,0 +1,13 @@
+{
+  "name": "wecult-radar",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "WeCult growth radar: scans public communities for people looking for a tracker app, scores intent with AI, drafts replies, delivers to Telegram for HUMAN review and posting. It never posts anything itself.",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "scan": "node src/index.js --job=scan",
+    "digest": "node src/index.js --job=digest",
+    "dry": "node src/index.js --job=scan --dry"
+  }
+}
