@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { collectReddit } from "./collectors/reddit.js";
 import { collectHn } from "./collectors/hn.js";
 import { collectGnews } from "./collectors/gnews.js";
+import { collectBluesky } from "./collectors/bluesky.js";
 import { freshness } from "./lib/freshness.js";
 import { scoreItems, draftReplies } from "./score.js";
 import { filterNew, saveOpportunities, pendingOpportunities, markNotified } from "./seen.js";
@@ -45,6 +46,7 @@ async function scan() {
     ["reddit", () => collectReddit(cfg.reddit, log)],
     ["hn", () => collectHn(cfg.hn, log)],
     ["gnews", () => collectGnews(cfg.gnews, log)],
+    ["bluesky", () => collectBluesky(cfg.bluesky, log)],
   ].filter(([name]) => SOURCES.includes(name))) {
     try {
       const got = await fn();
@@ -105,8 +107,17 @@ async function scan() {
   }
 }
 
+const PEOPLE_CLASSES = new Set(["LOST_USER", "SEEKER", "COMPETITOR_PAIN", "BRAND_MENTION"]);
+
 async function digest() {
-  const items = DRY ? [] : await pendingOpportunities(DIGEST_LIMIT);
+  let items = DRY ? [] : await pendingOpportunities(DIGEST_LIMIT);
+  // People to talk to outrank articles regardless of score — the whole point
+  // is conversations, not press clippings.
+  items = items.sort(
+    (a, b) =>
+      (PEOPLE_CLASSES.has(b.klass) ? 1 : 0) - (PEOPLE_CLASSES.has(a.klass) ? 1 : 0) ||
+      b.score - a.score
+  );
   if (!items.length) {
     await deliver("📡 Radar günlük özeti: bekleyen yeni fırsat yok.");
     return;

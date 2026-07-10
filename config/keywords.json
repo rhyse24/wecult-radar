@@ -22,6 +22,15 @@
     ]
   },
   "hn": ["tv time", "tracker app", "letterboxd", "wecult"],
+  "bluesky": [
+    "tv time alternative",
+    "tv time shutting down",
+    "tv time app",
+    "app to track shows",
+    "letterboxd for tv",
+    "goodreads alternative",
+    "wecult"
+  ],
   "gnews": {
     "en": ["\"tv time\" alternative", "\"tv time\" shut down", "tv show tracker app"],
     "tr": ["dizi takip uygulaması", "tv time kapanıyor"]
