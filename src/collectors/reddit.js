@@ -31,7 +31,7 @@ const UA = "script:wecult-radar:1.0 (read-only community monitor for wecult.app)
 // Anonymous budget is ~1 req / 10s per IP in practice; stay well under it and
 // rotate the search list so each run only fetches a third of it (every search
 // is still visited every ~90 min at the 30-min cadence).
-const RSS_DELAY_MS = 20000;
+const RSS_DELAY_MS = 30000;
 const RSS_ROTATION_GROUPS = 3;
 const API_DELAY_MS = 1500;
 
@@ -104,22 +104,19 @@ async function collectViaRss(cfg, log) {
   ];
   const items = [];
   for (const url of urls) {
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      try {
-        const xml = process.env.REDDIT_PROXY
-          ? await getText(viaProxy(url))
-          : await curlText(url, UA);
-        for (const e of parseAtom(xml)) {
-          if (!e.id || !e.url) continue;
-          items.push({ ...e, source: "reddit", id: `reddit:${e.id}` });
-        }
-        break;
-      } catch (err) {
-        log(`reddit feed failed (${url}) attempt ${attempt}: ${err.message}`);
-        // 403s are transient here; 429 means cool off before the single retry
-        if (attempt === 2) break;
-        await sleep(60000);
+    // Single attempt per feed: under budget pressure retries double the
+    // request count and make everything worse. A missed feed is simply
+    // caught by the next 30-min run.
+    try {
+      const xml = process.env.REDDIT_PROXY
+        ? await getText(viaProxy(url))
+        : await curlText(url, UA);
+      for (const e of parseAtom(xml)) {
+        if (!e.id || !e.url) continue;
+        items.push({ ...e, source: "reddit", id: `reddit:${e.id}` });
       }
+    } catch (err) {
+      log(`reddit feed failed (${url}): ${err.message}`);
     }
     await sleep(RSS_DELAY_MS);
   }
