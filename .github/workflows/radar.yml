@@ -44,7 +44,7 @@ jobs:
           # Reddit is collected from a residential IP via a local scheduled
           # task (GitHub runner IPs are blocked on Reddit's endpoints).
           if [ "$JOB" = "scan" ]; then
-            node src/index.js --job=scan --sources=hn,gnews,bluesky
+            node src/index.js --job=scan --sources=hn,bluesky
           else
             node src/index.js --job=digest
           fi

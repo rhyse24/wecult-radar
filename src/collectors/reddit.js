@@ -1,5 +1,24 @@
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { getText, sleep } from "../lib/http.js";
 import { parseAtom, stripHtml } from "../lib/feed.js";
+
+const execFileP = promisify(execFile);
+
+// Reddit's edge hard-403s Node's (undici) TLS fingerprint even from clean
+// residential IPs, while curl with the same UA and IP passes. So the RSS
+// path shells out to curl (ships with Windows 10+/Linux runners).
+async function curlText(url, ua) {
+  const { stdout } = await execFileP(
+    "curl",
+    ["-s", "--max-time", "20", "-A", ua, "-w", "\n__HTTP_STATUS__%{http_code}", url],
+    { maxBuffer: 8 * 1024 * 1024 }
+  );
+  const idx = stdout.lastIndexOf("\n__HTTP_STATUS__");
+  const status = Number(stdout.slice(idx + 16));
+  if (status !== 200) throw new Error(`HTTP ${status} for ${url}`);
+  return stdout.slice(0, idx);
+}
 
 // Two access paths:
 // 1. Official OAuth API (preferred) — set REDDIT_CLIENT_ID + REDDIT_CLIENT_SECRET
@@ -87,7 +106,9 @@ async function collectViaRss(cfg, log) {
   for (const url of urls) {
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
-        const xml = await getText(viaProxy(url));
+        const xml = process.env.REDDIT_PROXY
+          ? await getText(viaProxy(url))
+          : await curlText(url, UA);
         for (const e of parseAtom(xml)) {
           if (!e.id || !e.url) continue;
           items.push({ ...e, source: "reddit", id: `reddit:${e.id}` });

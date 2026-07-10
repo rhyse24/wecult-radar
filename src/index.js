@@ -91,8 +91,11 @@ async function scan() {
     await deliver("⚠️ Radar: bu turda Groq skorlaması tamamen başarısız — tarama sürüyor ama eleme yok. Log'a bak.");
   }
 
-  const instant = scoredOk.filter((i) => i.score >= INSTANT_THRESHOLD);
-  const queued = scoredOk.filter((i) => i.score >= SAVE_THRESHOLD && i.score < INSTANT_THRESHOLD);
+  // Product rule (2026-07-10): only conversations count. Articles/news are
+  // not deliverable opportunities — people's posts and comments are.
+  const people = scoredOk.filter((i) => PEOPLE_CLASSES.has(i.klass));
+  const instant = people.filter((i) => i.score >= INSTANT_THRESHOLD);
+  const queued = people.filter((i) => i.score >= SAVE_THRESHOLD && i.score < INSTANT_THRESHOLD);
   log(`instant: ${instant.length}, queued for digest: ${queued.length}`);
 
   for (const it of instant.slice(0, 5)) {
