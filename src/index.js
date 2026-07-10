@@ -3,6 +3,7 @@ import { collectReddit } from "./collectors/reddit.js";
 import { collectHn } from "./collectors/hn.js";
 import { collectGnews } from "./collectors/gnews.js";
 import { collectBluesky } from "./collectors/bluesky.js";
+import { collectYoutube } from "./collectors/youtube.js";
 import { freshness } from "./lib/freshness.js";
 import { scoreItems, draftReplies } from "./score.js";
 import { filterNew, saveOpportunities, pendingOpportunities, markNotified } from "./seen.js";
@@ -47,6 +48,7 @@ async function scan() {
     ["hn", () => collectHn(cfg.hn, log)],
     ["gnews", () => collectGnews(cfg.gnews, log)],
     ["bluesky", () => collectBluesky(cfg.bluesky, log)],
+    ["youtube", () => collectYoutube(cfg.youtube, log)],
   ].filter(([name]) => SOURCES.includes(name))) {
     try {
       const got = await fn();
